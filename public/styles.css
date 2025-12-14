@@ -292,6 +292,60 @@ h3 {
   gap: 14px;
 }
 
+.maps-panel .map-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 14px;
+  margin-top: 14px;
+  align-items: stretch;
+}
+
+.map-canvas {
+  position: relative;
+  min-height: 360px;
+  height: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: radial-gradient(circle at 20% 20%, rgba(60, 242, 192, 0.05), transparent 25%),
+    radial-gradient(circle at 80% 20%, rgba(123, 215, 255, 0.08), transparent 30%),
+    #0c1627;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.map-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+#map > div {
+  border-radius: var(--radius);
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  filter: saturate(1.1);
+}
+
+.ghost-btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.ghost-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .card-head {
   display: flex;
   justify-content: space-between;
@@ -361,6 +415,17 @@ h3 {
   color: #c1ffd8;
 }
 
+.list.compact .item {
+  grid-template-columns: 1fr;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.list.compact .distance {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .bar {
   margin: 8px 0;
 }
@@ -420,5 +485,8 @@ h3 {
   }
   .meta-item {
     width: 100%;
+  }
+  .maps-panel .map-grid {
+    grid-template-columns: 1fr;
   }
 }

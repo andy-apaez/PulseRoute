@@ -5,6 +5,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
+app.enable("trust proxy");
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === "production" && req.headers["x-forwarded-proto"] === "http") {
+    const host = req.headers.host || "";
+    return res.redirect(301, `https://${host}${req.originalUrl}`);
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 

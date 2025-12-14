@@ -10,6 +10,12 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -132,9 +138,41 @@
             </div>
           </div>
         </section>
+
+        <section class="panel maps-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Local routing</p>
+              <h2>Find your nearest hospital</h2>
+              <p class="lede">Use OpenStreetMap data to jump to nearby hospitals and send patients the fastest route.</p>
+            </div>
+            <div class="pill ghost" id="maps-status">Loading map...</div>
+          </div>
+
+          <div class="map-grid">
+            <div id="map" class="map-canvas">
+              <div class="map-placeholder">Map loading...</div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <h4>Hospitals nearby</h4>
+                <button type="button" class="ghost-btn" id="locate-btn">Use my location</button>
+              </div>
+              <div class="list compact" id="places-list">
+                <div class="meta-line">Tap "Use my location" to search within ~10km.</div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
 
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-odA6yPG8R6H0kJr0CBA01gLfLrPdK5T1lPA8lfM9X+8="
+      crossorigin=""
+    ></script>
     <script src="/app.js"></script>
   </body>
 </html>
