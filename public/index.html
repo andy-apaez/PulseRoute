@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PulseRoute | AI Triage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div class="brand">
+          <div class="dot"></div>
+          <div>
+            <div class="brand-title">PulseRoute</div>
+            <div class="brand-sub">AI triage + hospital load radar</div>
+          </div>
+        </div>
+        <div class="pill online">Gemini ready</div>
+      </header>
+
+      <main class="grid">
+        <section class="panel wide">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Patient Intake</p>
+              <h1>Turn messy symptoms into clear routing</h1>
+              <p class="lede">
+                Enter the patient’s story, vitals, or notes. Gemini structures the signal, scores severity,
+                and routes to ER, urgent care, or telehealth with a calm rationale.
+              </p>
+            </div>
+            <div class="meta">
+              <div class="meta-item">
+                <span class="label">Model</span>
+                <span class="value">Gemini 1.5 Flash</span>
+              </div>
+              <div class="meta-item">
+                <span class="label">Output</span>
+                <span class="value">JSON + plain language</span>
+              </div>
+            </div>
+          </div>
+          <div class="intake">
+            <form id="intake-form" class="card">
+              <div class="row two">
+                <label class="field">
+                  <span>Name</span>
+                  <input name="name" placeholder="Jane Doe" />
+                </label>
+                <label class="field">
+                  <span>Age</span>
+                  <input name="age" type="number" min="0" placeholder="34" />
+                </label>
+              </div>
+              <label class="field">
+                <span>Symptoms / story</span>
+                <textarea
+                  name="symptoms"
+                  rows="3"
+                  placeholder="Example: Woke up with crushing chest tightness, nausea, short of breath when walking."
+                  required
+                ></textarea>
+              </label>
+              <div class="row two">
+                <label class="field">
+                  <span>Vitals (BP, HR, SpO2)</span>
+                  <input name="vitals" placeholder="BP 150/95, HR 110, SpO2 93%" />
+                </label>
+                <label class="field">
+                  <span>History / meds</span>
+                  <input name="history" placeholder="Hypertension, on lisinopril" />
+                </label>
+              </div>
+              <button type="submit" class="cta">Run triage</button>
+            </form>
+
+            <div class="card result" id="result-card">
+              <p class="eyebrow">AI Triage</p>
+              <h3 id="result-title">Waiting for input...</h3>
+              <div class="result-pills">
+                <span class="pill" id="result-severity">-</span>
+                <span class="pill muted" id="result-route">-</span>
+                <span class="pill ghost" id="result-wait">-</span>
+              </div>
+              <p class="result-text" id="result-explanation">
+                Submit an intake to see routing, wait range, and why Gemini flagged it.
+              </p>
+              <div class="features" id="result-features"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Hospital Dashboard</p>
+              <h2>Incoming cases + triage buckets</h2>
+            </div>
+            <div class="pill ghost" id="load-pill">Predicted load updating</div>
+          </div>
+
+          <div class="dashboard">
+            <div class="card" id="incoming-card">
+              <div class="card-head">
+                <h4>Live Intake</h4>
+                <span class="small">Latest 6 cases</span>
+              </div>
+              <div class="list" id="incoming-list"></div>
+            </div>
+
+            <div class="card" id="buckets-card">
+              <div class="card-head">
+                <h4>Triage buckets</h4>
+                <span class="small">Gemini + heuristic scoring</span>
+              </div>
+              <div id="bucket-bars"></div>
+            </div>
+
+            <div class="card" id="forecast-card">
+              <div class="card-head">
+                <h4>Predicted load (next hour)</h4>
+                <span class="small">Autofilled from triage mix</span>
+              </div>
+              <div class="forecast-grid" id="forecast-grid"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
