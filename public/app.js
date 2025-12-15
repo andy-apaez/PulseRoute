@@ -10,12 +10,19 @@ const resultRoute = document.getElementById("result-route");
 const resultWait = document.getElementById("result-wait");
 const resultText = document.getElementById("result-explanation");
 const resultFeatures = document.getElementById("result-features");
+const resultQuestions = document.getElementById("result-questions");
+const sbarText = document.getElementById("sbar-text");
+const sbarCopyBtn = document.getElementById("sbar-copy");
+const langSelect = document.getElementById("lang-select");
+const i18nNodes = document.querySelectorAll("[data-i18n]");
+const i18nPlaceholders = document.querySelectorAll("[data-i18n-placeholder]");
 const mapStatus = document.getElementById("maps-status");
 const mapContainer = document.getElementById("map");
 const placesList = document.getElementById("places-list");
 const locateBtn = document.getElementById("locate-btn");
+const DASHBOARD_STORAGE_KEY = "dashboard_state";
 
-const state = {
+let state = {
   cases: [
     {
       name: "Samuel P.",
@@ -53,6 +60,17 @@ const state = {
   },
 };
 
+let sharedSBAR = "";
+
+const savedDashboard = loadSavedDashboardState();
+if (savedDashboard?.cases?.length) {
+  state = {
+    cases: savedDashboard.cases,
+    forecast: savedDashboard.forecast || state.forecast,
+  };
+  sharedSBAR = savedDashboard.lastSBAR || "";
+}
+
 const mapState = {
   map: null,
   markers: [],
@@ -61,6 +79,182 @@ const mapState = {
   locateBound: false,
 };
 
+let lastTriage = null;
+
+const translations = {
+  en: {
+    eyebrow_intake: "Patient Intake",
+    headline: "Turn messy symptoms into clear routing",
+    lede: "Enter the patient’s story, vitals, or notes. Gemini structures the signal, scores severity, and routes to ER, urgent care, or telehealth with a calm rationale.",
+    language_label: "Language",
+    label_name: "Name",
+    label_age: "Age",
+    label_sex: "Sex",
+    label_duration: "Duration",
+    label_symptoms: "Symptoms / story",
+    label_vitals: "Vitals (BP, HR, SpO2)",
+    label_history: "History / meds",
+    ph_name: "Jane Doe",
+    ph_age: "34",
+    ph_sex: "Female",
+    ph_duration: "3 hours",
+    ph_symptoms: "Example: Woke up with crushing chest tightness, nausea, short of breath when walking.",
+    ph_vitals: "BP 150/95, HR 110, SpO2 93%",
+    ph_history: "Hypertension, on lisinopril",
+    cta_run: "Run triage",
+    eyebrow_result: "AI Triage",
+    result_waiting_title: "Waiting for input...",
+    result_waiting_body: "Submit an intake to see routing, wait range, and why Gemini flagged it.",
+    loading_title: "Scoring...",
+    loading_body: "Consulting Gemini for structured triage.",
+    triage_failed_title: "Triage failed",
+    triage_failed_body: "Could not complete triage:",
+    clarifying_title: "Clarifying questions to tighten severity:",
+    clarifying_empty: "No clarifying questions returned.",
+    sbar_title: "SBAR write-up",
+    sbar_copy: "Copy",
+    sbar_placeholder: "Run triage to generate an SBAR summary grounded in the latest result.",
+  },
+  es: {
+    eyebrow_intake: "Ingreso de pacientes",
+    headline: "Convierte síntomas confusos en una ruta clara",
+    lede: "Ingresa la historia, signos vitales o notas. Gemini estructura la información, puntúa la gravedad y dirige a urgencias, cuidado urgente o telemedicina con una explicación calmada.",
+    language_label: "Idioma",
+    label_name: "Nombre",
+    label_age: "Edad",
+    label_sex: "Sexo",
+    label_duration: "Duración",
+    label_symptoms: "Síntomas / historia",
+    label_vitals: "Signos vitales (PA, FC, SpO2)",
+    label_history: "Antecedentes / medicamentos",
+    ph_name: "Jane Doe",
+    ph_age: "34",
+    ph_sex: "Femenino",
+    ph_duration: "3 horas",
+    ph_symptoms: "Ej: Despertó con opresión en el pecho, náuseas, falta de aire al caminar.",
+    ph_vitals: "PA 150/95, FC 110, SpO2 93%",
+    ph_history: "Hipertensión, en lisinopril",
+    cta_run: "Ejecutar triaje",
+    eyebrow_result: "Triaje AI",
+    result_waiting_title: "Esperando datos...",
+    result_waiting_body: "Envía el ingreso para ver la ruta, el rango de espera y la explicación.",
+    loading_title: "Calculando...",
+    loading_body: "Consultando a Gemini para un triaje estructurado.",
+    triage_failed_title: "Triaje falló",
+    triage_failed_body: "No se pudo completar el triaje:",
+    clarifying_title: "Preguntas para afinar la gravedad:",
+    clarifying_empty: "No se devolvieron preguntas aclaratorias.",
+    sbar_title: "Informe SBAR",
+    sbar_copy: "Copiar",
+    sbar_placeholder: "Ejecuta el triaje para generar un resumen SBAR basado en el resultado.",
+  },
+  zh: {
+    eyebrow_intake: "患者分诊",
+    headline: "将混乱症状转化为清晰分诊路径",
+    lede: "输入病情描述、生命体征或备注。Gemini 提取要点、评估严重度，并给出急诊/急救/远程的路线和理由。",
+    language_label: "语言",
+    label_name: "姓名",
+    label_age: "年龄",
+    label_sex: "性别",
+    label_duration: "病程",
+    label_symptoms: "症状 / 描述",
+    label_vitals: "生命体征 (血压, 心率, 血氧)",
+    label_history: "病史 / 用药",
+    ph_name: "张三",
+    ph_age: "34",
+    ph_sex: "女性",
+    ph_duration: "3 小时",
+    ph_symptoms: "例：醒来时胸口压迫感，恶心，走路时气短。",
+    ph_vitals: "血压150/95，心率110，血氧93%",
+    ph_history: "高血压，服用降压药",
+    cta_run: "开始分诊",
+    eyebrow_result: "AI 分诊",
+    result_waiting_title: "等待输入...",
+    result_waiting_body: "提交信息以查看路线、等待范围和原因。",
+    loading_title: "正在评分...",
+    loading_body: "向 Gemini 请求结构化分诊。",
+    triage_failed_title: "分诊失败",
+    triage_failed_body: "无法完成分诊：",
+    clarifying_title: "澄清问题（细化严重度）：",
+    clarifying_empty: "没有返回澄清问题。",
+    sbar_title: "SBAR 摘要",
+    sbar_copy: "复制",
+    sbar_placeholder: "运行分诊以生成基于最新结果的 SBAR 摘要。",
+  },
+  ar: {
+    eyebrow_intake: "استقبال المرضى",
+    headline: "حوّل الأعراض غير الواضحة إلى مسار رعاية واضح",
+    lede: "أدخل القصة أو العلامات الحيوية أو الملاحظات. Gemini يرتب الإشارات، يقيّم الشدة، ويوجه إلى الطوارئ أو الرعاية العاجلة أو الطب عن بُعد مع توضيح هادئ.",
+    language_label: "اللغة",
+    label_name: "الاسم",
+    label_age: "العمر",
+    label_sex: "الجنس",
+    label_duration: "المدة",
+    label_symptoms: "الأعراض / القصة",
+    label_vitals: "العلامات الحيوية (ضغط، نبض، أكسجة)",
+    label_history: "التاريخ الطبي / الأدوية",
+    ph_name: "فلان",
+    ph_age: "34",
+    ph_sex: "أنثى",
+    ph_duration: "3 ساعات",
+    ph_symptoms: "مثال: استيقظ على ألم ضاغط في الصدر مع غثيان وضيق نفس عند المشي.",
+    ph_vitals: "ضغط 150/95، نبض 110، أكسجة 93%",
+    ph_history: "ارتفاع ضغط، يتناول دواءً خافضاً",
+    cta_run: "بدء الفرز",
+    eyebrow_result: "الفرز الآلي",
+    result_waiting_title: "بانتظار البيانات...",
+    result_waiting_body: "أرسل البيانات لرؤية المسار، زمن الانتظار، وسبب التوجيه.",
+    loading_title: "جارٍ التقييم...",
+    loading_body: "يتم سؤال Gemini لفرز مُنظم.",
+    triage_failed_title: "فشل الفرز",
+    triage_failed_body: "تعذر إتمام الفرز:",
+    clarifying_title: "أسئلة توضيحية لتدقيق الشدة:",
+    clarifying_empty: "لا توجد أسئلة توضيحية.",
+    sbar_title: "تقرير SBAR",
+    sbar_copy: "نسخ",
+    sbar_placeholder: "شغّل الفرز لإنشاء ملخص SBAR مبني على آخر نتيجة.",
+  },
+};
+
+let currentLang = localStorage.getItem("lang") || "en";
+
+function applyLanguage(lang) {
+  currentLang = translations[lang] ? lang : "en";
+  const dict = translations[currentLang];
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
+
+  i18nNodes.forEach((el) => {
+    const key = el.dataset.i18n;
+    if (dict[key]) el.textContent = dict[key];
+  });
+
+  i18nPlaceholders.forEach((el) => {
+    const key = el.dataset.i18nPlaceholder;
+    if (dict[key]) el.placeholder = dict[key];
+  });
+
+  if (langSelect && langSelect.value !== currentLang) {
+    langSelect.value = currentLang;
+  }
+
+  if (resultSeverity?.textContent === "-" && resultRoute?.textContent === "-") {
+    if (resultTitle) resultTitle.textContent = t("result_waiting_title");
+    if (resultText) resultText.textContent = t("result_waiting_body");
+  }
+
+  if (sbarText && (!sbarText.value || sbarText.value === "" || sbarText.value === translations.en.sbar_placeholder)) {
+    sbarText.value = t("sbar_placeholder");
+  }
+
+  localStorage.setItem("lang", currentLang);
+}
+
+if (langSelect) {
+  langSelect.addEventListener("change", (e) => applyLanguage(e.target.value));
+}
+
+applyLanguage(currentLang);
 renderAll();
 bindLocateButton();
 initMapsSection();
@@ -71,6 +265,8 @@ intakeForm.addEventListener("submit", async (e) => {
   const payload = {
     name: form.get("name") || "Unnamed patient",
     age: form.get("age") ? Number(form.get("age")) : undefined,
+    sex: form.get("sex") || "",
+    duration: form.get("duration") || "",
     symptoms: form.get("symptoms"),
     vitals: form.get("vitals"),
     history: form.get("history"),
@@ -96,6 +292,8 @@ intakeForm.addEventListener("submit", async (e) => {
     state.cases.unshift({
       name: payload.name,
       age: payload.age,
+      sex: payload.sex,
+      duration: payload.duration,
       symptoms: payload.symptoms,
       severityScore: triage.severityScore,
       severityLabel: triage.severityLabel,
@@ -103,25 +301,34 @@ intakeForm.addEventListener("submit", async (e) => {
       waitRange: triage.waitRange,
       explanation: triage.explanation,
       extractedFeatures: triage.extractedFeatures,
-    });
+      history: payload.history,
+      vitals: payload.vitals,
+      sbar: buildSBAR(triage),
+  });
 
-    state.cases.length = Math.min(state.cases.length, 12);
-    state.forecast = data.forecast || state.forecast;
+  state.cases.length = Math.min(state.cases.length, 12);
+  state.forecast = data.forecast || state.forecast;
 
-    renderResult(triage);
-    renderAll();
+  lastTriage = triage;
+  renderResult(triage);
+  renderSBAR(triage);
+  persistDashboardState();
+  renderAll();
   } catch (err) {
     renderError(err.message);
   }
 });
 
 function renderAll() {
-  renderIncoming();
-  renderBuckets();
-  renderForecast();
+  if (incomingList || bucketBars || forecastGrid) {
+    renderIncoming();
+    renderBuckets();
+    renderForecast();
+  }
 }
 
 function renderIncoming() {
+  if (!incomingList) return;
   incomingList.innerHTML = "";
   state.cases.slice(0, 6).forEach((c) => {
     const div = document.createElement("div");
@@ -142,6 +349,7 @@ function renderIncoming() {
 }
 
 function renderBuckets() {
+  if (!bucketBars) return;
   bucketBars.innerHTML = "";
   const counts = { er: 0, urgent_care: 0, telehealth: 0 };
 
@@ -172,6 +380,7 @@ function renderBuckets() {
 }
 
 function renderForecast() {
+  if (!forecastGrid) return;
   forecastGrid.innerHTML = "";
   const load = state.forecast?.predictedLoadNextHour || {};
   const order = [
@@ -192,7 +401,9 @@ function renderForecast() {
   });
 
   const sum = Object.values(load).filter(Boolean).reduce((a, b) => a + b, 0);
-  loadPill.textContent = sum ? `Load: ${sum} predicted next hour` : "Predicted load updating";
+  if (loadPill) {
+    loadPill.textContent = sum ? `Load: ${sum} predicted next hour` : "Predicted load updating";
+  }
 }
 
 function renderResult(triage) {
@@ -207,39 +418,46 @@ function renderResult(triage) {
   resultWait.className = "pill ghost";
 
   resultFeatures.innerHTML = "";
+  resultQuestions.innerHTML = "";
 
   const extracted = triage.extractedFeatures || {};
   const featureEntries = Object.entries(extracted);
 
   if (!featureEntries.length) {
     resultFeatures.innerHTML = `<div class="feature"><div class="label">Signals</div><div class="value">No structured features returned.</div></div>`;
-    return;
+  } else {
+    featureEntries.forEach(([key, value]) => {
+      const block = document.createElement("div");
+      block.className = "feature";
+      block.innerHTML = `<div class="label">${key}</div><div class="value">${formatValue(value)}</div>`;
+      resultFeatures.appendChild(block);
+    });
   }
 
-  featureEntries.forEach(([key, value]) => {
-    const block = document.createElement("div");
-    block.className = "feature";
-    block.innerHTML = `<div class="label">${key}</div><div class="value">${formatValue(value)}</div>`;
-    resultFeatures.appendChild(block);
-  });
+  renderClarifyingQuestions(triage.clarifyingQuestions);
+  renderSBAR(triage);
 }
 
 function setResultLoading() {
-  resultTitle.textContent = "Scoring...";
+  resultTitle.textContent = t("loading_title");
   resultSeverity.textContent = "—";
   resultRoute.textContent = "—";
   resultWait.textContent = "—";
-  resultText.textContent = "Consulting Gemini for structured triage.";
+  resultText.textContent = t("loading_body");
   resultFeatures.innerHTML = "";
+  resultQuestions.innerHTML = "";
+  if (sbarText) sbarText.value = t("sbar_placeholder");
 }
 
 function renderError(message) {
-  resultTitle.textContent = "Triage failed";
+  resultTitle.textContent = t("triage_failed_title");
   resultSeverity.textContent = "—";
   resultRoute.textContent = "—";
   resultWait.textContent = "—";
-  resultText.textContent = `Could not complete triage: ${message}`;
+  resultText.textContent = `${t("triage_failed_body")} ${message}`;
   resultFeatures.innerHTML = "";
+  resultQuestions.innerHTML = "";
+  if (sbarText) sbarText.value = t("sbar_placeholder");
 }
 
 function routeLabel(route) {
@@ -254,10 +472,111 @@ function severityClass(score) {
   return "severity-low";
 }
 
+function t(key) {
+  const dict = translations[currentLang] || translations.en;
+  return dict[key] || translations.en[key] || key;
+}
+
 function formatValue(value) {
   if (Array.isArray(value)) return value.join(", ");
   if (typeof value === "object") return JSON.stringify(value);
   return value;
+}
+
+function renderClarifyingQuestions(list) {
+  if (!resultQuestions) return;
+  resultQuestions.innerHTML = "";
+  const questions = Array.isArray(list) ? list.filter(Boolean) : [];
+  if (!questions.length) {
+    resultQuestions.innerHTML = `<div class="question-item">${t("clarifying_empty")}</div>`;
+    return;
+  }
+  const title = document.createElement("div");
+  title.className = "title";
+  title.textContent = t("clarifying_title");
+  resultQuestions.appendChild(title);
+
+  questions.slice(0, 3).forEach((q) => {
+    const div = document.createElement("div");
+    div.className = "question-item";
+    div.textContent = q;
+    resultQuestions.appendChild(div);
+  });
+}
+
+function renderSBAR(triage) {
+  if (!sbarText) return;
+  if (!triage) {
+    sbarText.value = t("sbar_placeholder");
+    return;
+  }
+  const sbarString = buildSBAR(triage);
+  sbarText.value = sbarString;
+  sharedSBAR = sbarString;
+  persistDashboardState();
+}
+
+function buildSBAR(triage) {
+  const patient = triage.patient || {};
+  const age = patient.age ? `${patient.age}-year-old` : "Age not provided";
+  const sex = patient.sex || "sex not provided";
+  const duration = patient.duration || "unspecified duration";
+  const chief = patient.symptoms || "No chief complaint provided";
+  const vitals = describeVitals(patient.vitals);
+  const history = patient.history || "Not provided";
+  const severityLine = `Severity labeled ${triage.severityLabel} (route: ${routeLabel(triage.careRoute)}, wait ${triage.waitRange} mins).`;
+
+  const features = triage.extractedFeatures || {};
+  const featureSummary = Object.keys(features).length
+    ? Object.entries(features)
+        .map(([k, v]) => `${k}: ${formatValue(v)}`)
+        .join("; ")
+    : "";
+
+  const clarifying = Array.isArray(triage.clarifyingQuestions) ? triage.clarifyingQuestions.filter(Boolean) : [];
+  const clarifyingLine = clarifying.length ? clarifying.join(" | ") : "None provided";
+
+  return [
+    `Situation: ${age} ${sex} presenting with ${chief} for ${duration}.`,
+    `Background: Vitals ${vitals}. History: ${history}.`,
+    `Assessment: ${severityLine} ${triage.explanation || ""}${featureSummary ? ` Key signals: ${featureSummary}.` : ""}`,
+    `Recommendation: Route to ${routeLabel(triage.careRoute)}; monitor for escalation. Clarifying Qs: ${clarifyingLine}.`,
+  ].join("\n");
+}
+
+function describeVitals(vitals) {
+  if (!vitals) return "not provided";
+  if (typeof vitals === "string") return vitals || "not provided";
+  if (typeof vitals === "object") {
+    const entries = Object.entries(vitals).map(([k, v]) => `${k}: ${v}`);
+    return entries.length ? entries.join(", ") : "not provided";
+  }
+  return String(vitals);
+}
+
+function loadSavedDashboardState() {
+  try {
+    const raw = localStorage.getItem(DASHBOARD_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (err) {
+    return null;
+  }
+}
+
+function persistDashboardState() {
+  try {
+    localStorage.setItem(
+      DASHBOARD_STORAGE_KEY,
+      JSON.stringify({
+        cases: state.cases,
+        forecast: state.forecast,
+        lastSBAR: sharedSBAR || "",
+      })
+    );
+  } catch (err) {
+    // ignore
+  }
 }
 
 async function initMapsSection() {
@@ -334,6 +653,27 @@ function bindLocateButton() {
   if (!locateBtn || mapState.locateBound) return;
   locateBtn.addEventListener("click", requestLocation);
   mapState.locateBound = true;
+}
+
+if (sbarCopyBtn && navigator.clipboard) {
+  sbarCopyBtn.addEventListener("click", () => {
+    if (!sbarText) return;
+    navigator.clipboard
+      .writeText(sbarText.value || "")
+      .then(() => {
+        const prev = sbarCopyBtn.textContent;
+        sbarCopyBtn.textContent = "Copied";
+        setTimeout(() => {
+          sbarCopyBtn.textContent = t("sbar_copy");
+        }, 1200);
+      })
+      .catch(() => {
+        sbarCopyBtn.textContent = "Copy failed";
+        setTimeout(() => {
+          sbarCopyBtn.textContent = t("sbar_copy");
+        }, 1200);
+      });
+  });
 }
 
 async function searchHospitals(origin) {

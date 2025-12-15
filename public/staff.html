@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PulseRoute | Hospital Ops</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div class="brand">
+          <div class="dot"></div>
+          <div>
+            <div class="brand-title">PulseRoute</div>
+            <div class="brand-sub">Hospital operations dashboard</div>
+          </div>
+        </div>
+        <div class="pill ghost">Staff view</div>
+      </header>
+
+      <main class="grid">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Hospital Dashboard</p>
+              <h2>Incoming cases, acuity mix, and predicted load</h2>
+              <p class="lede">
+                Neutral, operational snapshot for clinical staff. Data mirrors the latest triage runs from the patient side when available.
+              </p>
+            </div>
+            <div class="pill ghost" id="load-pill">Predicted load updating</div>
+          </div>
+
+          <div class="dashboard">
+            <div class="card" id="incoming-card">
+              <div class="card-head">
+                <h4>Live Intake</h4>
+                <span class="small">Latest 6 cases</span>
+              </div>
+              <div class="list" id="incoming-list"></div>
+            </div>
+
+            <div class="card" id="buckets-card">
+              <div class="card-head">
+                <h4>Acuity buckets</h4>
+                <span class="small">Mix by care route</span>
+              </div>
+              <div id="bucket-bars"></div>
+            </div>
+
+            <div class="card" id="forecast-card">
+              <div class="card-head">
+                <h4>Predicted load (next hour)</h4>
+                <span class="small">Autofilled from triage mix</span>
+              </div>
+              <div class="forecast-grid" id="forecast-grid"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/staff.js"></script>
+  </body>
+</html>

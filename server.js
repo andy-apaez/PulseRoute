@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.post("/api/triage", async (req, res) => {
-  const { name, age, symptoms, vitals = {}, history = "" } = req.body || {};
+  const { name, age, sex, duration, symptoms, vitals = {}, history = "" } = req.body || {};
 
   if (!symptoms || typeof symptoms !== "string") {
     return res.status(400).json({ error: "symptoms text is required" });
@@ -33,7 +33,7 @@ app.post("/api/triage", async (req, res) => {
       geminiEnabled: Boolean(GEMINI_KEY),
     });
 
-    const triage = normalizeTriage(aiResult, { name, age, symptoms, vitals });
+    const triage = normalizeTriage(aiResult, { name, age, sex, duration, symptoms, vitals, history });
     const forecast = buildForecast(triage.careRoute);
 
     res.json({ triage, forecast });
@@ -57,6 +57,7 @@ async function callGemini({ symptoms, age, vitals, history, geminiEnabled }) {
     "- wait_range_minutes: string like \"10-30\".",
     "- extracted_features: key clinical signals from the text.",
     "- rationale: 2-3 short sentences, warm and concise, no extra advice.",
+    "- clarifying_questions: array of 1-3 short questions that would meaningfully tighten the severity score for this presentation.",
     "Keep JSON lean; do not add extra keys.",
   ].join("\n");
 
@@ -68,7 +69,7 @@ Patient input:
 - History: ${history || "none shared"}
 - Symptoms: ${symptoms}
 
-Return JSON with: severity_score, care_route, wait_range_minutes, extracted_features, rationale.`;
+Return JSON with: severity_score, care_route, wait_range_minutes, extracted_features, rationale, clarifying_questions.`;
 
   if (!geminiEnabled) {
     return fallbackHeuristic({ symptoms, age });
@@ -137,6 +138,7 @@ function fallbackHeuristic({ symptoms, age }) {
       notable_terms: redFlags.filter((t) => lower.includes(t)).concat(urgentFlags.filter((t) => lower.includes(t))),
     },
     rationale: "Based on the symptoms provided, this level of care keeps you safest. If anything worsens, seek immediate assistance.",
+    clarifying_questions: buildClarifyingQuestions({ redFlags, urgentFlags, lower }),
   };
 }
 
@@ -146,6 +148,7 @@ function normalizeTriage(aiResult, patient) {
     ? aiResult.care_route
     : routeFromSeverity(severityScore);
   const waitRange = aiResult.wait_range_minutes || waitRangeFor(careRoute, severityScore);
+  const clarifyingQuestions = Array.isArray(aiResult.clarifying_questions) ? aiResult.clarifying_questions.slice(0, 3) : [];
 
   return {
     id: `${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
@@ -156,6 +159,7 @@ function normalizeTriage(aiResult, patient) {
     waitRange,
     explanation: aiResult.rationale || "Recommendation generated from reported symptoms.",
     extractedFeatures: aiResult.extracted_features || {},
+    clarifyingQuestions,
   };
 }
 
@@ -199,6 +203,18 @@ function buildForecast(route) {
 
 function randomRange(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function buildClarifyingQuestions({ redFlags, urgentFlags, lower }) {
+  const questions = [];
+  if (redFlags.some((term) => lower.includes(term))) {
+    questions.push("Is the chest pain crushing/pressure-like and radiating to arm, jaw, or back?");
+  }
+  if (urgentFlags.some((term) => lower.includes(term))) {
+    questions.push("Have symptoms worsened over the past 24 hours or limited your ability to hydrate/eat?");
+  }
+  questions.push("Are there any new or worsening breathing difficulties, confusion, or fainting spells?");
+  return questions.slice(0, 3);
 }
 
 module.exports = app;
