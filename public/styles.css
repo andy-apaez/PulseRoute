@@ -300,6 +300,11 @@ h3 {
   box-shadow: 0 10px 25px rgba(60, 242, 192, 0.2);
 }
 
+.cta.small {
+  padding: 9px 14px;
+  font-size: 13px;
+}
+
 .cta:hover {
   transform: translateY(-1px);
 }
@@ -340,34 +345,6 @@ h3 {
 
 .feature .value {
   font-weight: 600;
-}
-
-.sbar {
-  margin-top: 12px;
-  display: grid;
-  gap: 8px;
-}
-
-.sbar-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.sbar .title {
-  font-weight: 600;
-  font-size: 13px;
-}
-
-#sbar-text {
-  width: 100%;
-  min-height: 120px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--text);
-  padding: 12px;
-  resize: vertical;
 }
 
 .item.clickable {
@@ -422,10 +399,51 @@ h3 {
   padding: 10px;
   resize: vertical;
 }
+
+.clarifying-card .meta-line {
+  color: var(--muted);
+}
+
+.questions-modal {
+  margin-top: 8px;
+}
+
 .questions {
   margin-top: 12px;
   display: grid;
   gap: 8px;
+}
+
+.questions .question-item.interactive {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.question-text {
+  flex: 1;
+}
+
+.answer-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.answer-pill.active {
+  border-color: rgba(60, 242, 192, 0.35);
+  background: rgba(60, 242, 192, 0.08);
+}
+
+.clarifying-status {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.clarify-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
 }
 
 .questions .title {

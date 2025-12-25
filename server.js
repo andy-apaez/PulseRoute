@@ -43,6 +43,49 @@ app.post("/api/triage", async (req, res) => {
   }
 });
 
+app.post("/api/clarify", async (req, res) => {
+  const {
+    symptoms,
+    clarifyingQuestions = [],
+    answers = {},
+    baseSeverity,
+    baseRoute,
+    baseWaitRange,
+    patient = {},
+  } = req.body || {};
+
+  if (!symptoms || typeof symptoms !== "string") {
+    return res.status(400).json({ error: "symptoms text is required" });
+  }
+
+  try {
+    const aiResult = await callGeminiClarify({
+      symptoms,
+      clarifyingQuestions,
+      answers,
+      baseSeverity,
+      baseRoute,
+      baseWaitRange,
+      geminiEnabled: Boolean(GEMINI_KEY),
+    });
+
+    const triage = normalizeClarify(aiResult, {
+      symptoms,
+      clarifyingQuestions,
+      answers,
+      baseSeverity,
+      baseRoute,
+      baseWaitRange,
+      patient,
+    });
+
+    res.json({ triage });
+  } catch (err) {
+    console.error("Clarify error", err);
+    res.status(500).json({ error: "Unable to process clarifying answers." });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`PulseRoute running on http://localhost:${PORT}`);
 });
@@ -56,8 +99,9 @@ async function callGemini({ symptoms, age, vitals, history, geminiEnabled }) {
     "- care_route: one of er|urgent_care|telehealth.",
     "- wait_range_minutes: string like \"10-30\".",
     "- extracted_features: key clinical signals from the text.",
-    "- rationale: 2-3 short sentences, warm and concise, no extra advice.",
+    "- rationale: 2-3 short sentences, warm and concise, no extra advice. Plain language clear to patients and staff.",
     "- clarifying_questions: array of 1-3 short questions that would meaningfully tighten the severity score for this presentation.",
+    "- Clarifying questions must be specific to the symptom story and ask for missing details (onset, location, severity, red-flag attributes). Avoid generic questions.",
     "Keep JSON lean; do not add extra keys.",
   ].join("\n");
 
@@ -111,6 +155,84 @@ Return JSON with: severity_score, care_route, wait_range_minutes, extracted_feat
   }
 }
 
+async function callGeminiClarify({
+  symptoms,
+  clarifyingQuestions,
+  answers,
+  baseSeverity,
+  baseRoute,
+  baseWaitRange,
+  geminiEnabled,
+}) {
+  const prompt = [
+    "You are a hospital triage assistant tightening a severity score after follow-up questions.",
+    "You will be given the original symptom story and 1-3 clarifying questions with yes/no answers.",
+    "Update the severity_score (1-5), care_route (er|urgent_care|telehealth), wait_range_minutes, and provide a short rationale.",
+    "Use plain language that is easy for both patients and clinical staff to read.",
+    "Keep JSON lean: severity_score, care_route, wait_range_minutes, rationale.",
+    "If answers increase concern, bump severity and explain why.",
+    "Never introduce new questions.",
+    "",
+    `Symptoms: ${symptoms}`,
+    `Original severity: ${baseSeverity || "unknown"}`,
+    `Original route: ${baseRoute || "unknown"}`,
+    `Original wait: ${baseWaitRange || "unknown"}`,
+    "Clarifying Q&A:",
+    ...clarifyingQuestions.map((q, idx) => `- Q${idx + 1}: ${q} | Answer: ${answers[idx] ? "yes" : "no"}`),
+    "",
+    "Return JSON only.",
+  ].join("\n");
+
+  if (!geminiEnabled) {
+    return fallbackClarify({ baseSeverity, baseRoute, baseWaitRange, answers });
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`;
+  const body = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      response_mime_type: "application/json",
+      temperature: 0.2,
+    },
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Gemini clarify error: ${response.status} ${text}`);
+  }
+
+  const data = await response.json();
+  const candidate = data?.candidates?.[0];
+  const textPart = candidate?.content?.parts?.[0]?.text;
+  if (!textPart) throw new Error("No Gemini clarify content returned");
+  try {
+    return JSON.parse(textPart);
+  } catch (err) {
+    throw new Error(`Gemini clarify JSON parse failed: ${err.message}`);
+  }
+}
+
+function fallbackClarify({ baseSeverity, baseRoute, baseWaitRange, answers }) {
+  const yesCount = Object.values(answers || {}).filter(Boolean).length;
+  const newSeverity = clamp((Number(baseSeverity) || 2) + yesCount, 1, 5);
+  const careRoute = baseRoute || routeFromSeverity(newSeverity);
+  const waitRange = baseWaitRange || waitRangeFor(careRoute, newSeverity);
+  return {
+    severity_score: newSeverity,
+    care_route: careRoute,
+    wait_range_minutes: waitRange,
+    rationale: yesCount
+      ? `Answers increased concern (${yesCount} yes). Severity adjusted.`
+      : "No added concern from follow-ups; keeping prior severity.",
+  };
+}
+
 function fallbackHeuristic({ symptoms, age }) {
   const lower = symptoms.toLowerCase();
   let severity = 2;
@@ -160,6 +282,22 @@ function normalizeTriage(aiResult, patient) {
     explanation: aiResult.rationale || "Recommendation generated from reported symptoms.",
     extractedFeatures: aiResult.extracted_features || {},
     clarifyingQuestions,
+  };
+}
+
+function normalizeClarify(aiResult, context) {
+  const severityScore = clamp(Number(aiResult.severity_score) || Number(context.baseSeverity) || 2, 1, 5);
+  const careRoute = ["er", "urgent_care", "telehealth"].includes(aiResult.care_route)
+    ? aiResult.care_route
+    : routeFromSeverity(severityScore);
+  const waitRange = aiResult.wait_range_minutes || context.baseWaitRange || waitRangeFor(careRoute, severityScore);
+
+  return {
+    severityScore,
+    severityLabel: severityLabel(severityScore),
+    careRoute,
+    waitRange,
+    explanation: aiResult.rationale || "Clarifying answers processed to update severity.",
   };
 }
 

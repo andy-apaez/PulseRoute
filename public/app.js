@@ -11,8 +11,6 @@ const resultWait = document.getElementById("result-wait");
 const resultText = document.getElementById("result-explanation");
 const resultFeatures = document.getElementById("result-features");
 const resultQuestions = document.getElementById("result-questions");
-const sbarText = document.getElementById("sbar-text");
-const sbarCopyBtn = document.getElementById("sbar-copy");
 const langSelect = document.getElementById("lang-select");
 const i18nNodes = document.querySelectorAll("[data-i18n]");
 const i18nPlaceholders = document.querySelectorAll("[data-i18n-placeholder]");
@@ -61,6 +59,7 @@ let state = {
 };
 
 let sharedSBAR = "";
+let clarifyState = { answers: {}, sending: false, done: false, message: "" };
 
 const savedDashboard = loadSavedDashboardState();
 if (savedDashboard?.cases?.length) {
@@ -111,9 +110,10 @@ const translations = {
     triage_failed_body: "Could not complete triage:",
     clarifying_title: "Clarifying questions to tighten severity:",
     clarifying_empty: "No clarifying questions returned.",
-    sbar_title: "SBAR write-up",
-    sbar_copy: "Copy",
-    sbar_placeholder: "Run triage to generate an SBAR summary grounded in the latest result.",
+    clarifying_status_wait: "Answer yes/no so Gemini can tighten severity.",
+    clarifying_status_done: "Sent to Gemini; severity updated if needed.",
+    clarifying_cta_send: "Send answers to Gemini",
+    clarifying_cta_sending: "Sending...",
   },
   es: {
     eyebrow_intake: "Ingreso de pacientes",
@@ -144,9 +144,10 @@ const translations = {
     triage_failed_body: "No se pudo completar el triaje:",
     clarifying_title: "Preguntas para afinar la gravedad:",
     clarifying_empty: "No se devolvieron preguntas aclaratorias.",
-    sbar_title: "Informe SBAR",
-    sbar_copy: "Copiar",
-    sbar_placeholder: "Ejecuta el triaje para generar un resumen SBAR basado en el resultado.",
+    clarifying_status_wait: "Responde sí/no para que Gemini ajuste la gravedad.",
+    clarifying_status_done: "Enviado a Gemini; gravedad ajustada si era necesario.",
+    clarifying_cta_send: "Enviar respuestas a Gemini",
+    clarifying_cta_sending: "Enviando...",
   },
   zh: {
     eyebrow_intake: "患者分诊",
@@ -177,9 +178,10 @@ const translations = {
     triage_failed_body: "无法完成分诊：",
     clarifying_title: "澄清问题（细化严重度）：",
     clarifying_empty: "没有返回澄清问题。",
-    sbar_title: "SBAR 摘要",
-    sbar_copy: "复制",
-    sbar_placeholder: "运行分诊以生成基于最新结果的 SBAR 摘要。",
+    clarifying_status_wait: "请回答是/否，以便 Gemini 细化严重度。",
+    clarifying_status_done: "已发送给 Gemini；如需已调整严重度。",
+    clarifying_cta_send: "发送回答给 Gemini",
+    clarifying_cta_sending: "发送中...",
   },
   ar: {
     eyebrow_intake: "استقبال المرضى",
@@ -210,9 +212,10 @@ const translations = {
     triage_failed_body: "تعذر إتمام الفرز:",
     clarifying_title: "أسئلة توضيحية لتدقيق الشدة:",
     clarifying_empty: "لا توجد أسئلة توضيحية.",
-    sbar_title: "تقرير SBAR",
-    sbar_copy: "نسخ",
-    sbar_placeholder: "شغّل الفرز لإنشاء ملخص SBAR مبني على آخر نتيجة.",
+    clarifying_status_wait: "أجب بنعم/لا ليتمكن Gemini من تدقيق الشدة.",
+    clarifying_status_done: "أُرسلت إلى Gemini؛ تم تعديل الشدة إن لزم.",
+    clarifying_cta_send: "إرسال الإجابات إلى Gemini",
+    clarifying_cta_sending: "جارٍ الإرسال...",
   },
 };
 
@@ -241,10 +244,6 @@ function applyLanguage(lang) {
   if (resultSeverity?.textContent === "-" && resultRoute?.textContent === "-") {
     if (resultTitle) resultTitle.textContent = t("result_waiting_title");
     if (resultText) resultText.textContent = t("result_waiting_body");
-  }
-
-  if (sbarText && (!sbarText.value || sbarText.value === "" || sbarText.value === translations.en.sbar_placeholder)) {
-    sbarText.value = t("sbar_placeholder");
   }
 
   localStorage.setItem("lang", currentLang);
@@ -304,16 +303,16 @@ intakeForm.addEventListener("submit", async (e) => {
       history: payload.history,
       vitals: payload.vitals,
       sbar: buildSBAR(triage),
-  });
+    });
 
-  state.cases.length = Math.min(state.cases.length, 12);
-  state.forecast = data.forecast || state.forecast;
+    state.cases.length = Math.min(state.cases.length, 12);
+    state.forecast = data.forecast || state.forecast;
 
-  lastTriage = triage;
-  renderResult(triage);
-  renderSBAR(triage);
-  persistDashboardState();
-  renderAll();
+    lastTriage = triage;
+    renderResult(triage);
+    renderSBAR(triage);
+    persistDashboardState();
+    renderAll();
   } catch (err) {
     renderError(err.message);
   }
@@ -406,7 +405,9 @@ function renderForecast() {
   }
 }
 
-function renderResult(triage) {
+function renderResult(triage, { preserveClarify = false } = {}) {
+  if (!triage) return;
+  if (!preserveClarify) clarifyState = { answers: {}, sending: false, done: false, message: "" };
   resultTitle.textContent = `${triage.patient.name || "New patient"} • Severity ${triage.severityScore}`;
   resultSeverity.textContent = triage.severityLabel;
   resultRoute.textContent = routeLabel(triage.careRoute);
@@ -434,7 +435,7 @@ function renderResult(triage) {
     });
   }
 
-  renderClarifyingQuestions(triage.clarifyingQuestions);
+  renderClarifyingQuestions(triage);
   renderSBAR(triage);
 }
 
@@ -446,7 +447,6 @@ function setResultLoading() {
   resultText.textContent = t("loading_body");
   resultFeatures.innerHTML = "";
   resultQuestions.innerHTML = "";
-  if (sbarText) sbarText.value = t("sbar_placeholder");
 }
 
 function renderError(message) {
@@ -457,7 +457,6 @@ function renderError(message) {
   resultText.textContent = `${t("triage_failed_body")} ${message}`;
   resultFeatures.innerHTML = "";
   resultQuestions.innerHTML = "";
-  if (sbarText) sbarText.value = t("sbar_placeholder");
 }
 
 function routeLabel(route) {
@@ -483,35 +482,189 @@ function formatValue(value) {
   return value;
 }
 
-function renderClarifyingQuestions(list) {
+function renderClarifyingQuestions(triage) {
   if (!resultQuestions) return;
   resultQuestions.innerHTML = "";
-  const questions = Array.isArray(list) ? list.filter(Boolean) : [];
+  const questions = Array.isArray(triage?.clarifyingQuestions)
+    ? triage.clarifyingQuestions.filter(Boolean).slice(0, 3)
+    : [];
+
   if (!questions.length) {
     resultQuestions.innerHTML = `<div class="question-item">${t("clarifying_empty")}</div>`;
     return;
   }
+
   const title = document.createElement("div");
   title.className = "title";
   title.textContent = t("clarifying_title");
   resultQuestions.appendChild(title);
 
-  questions.slice(0, 3).forEach((q) => {
-    const div = document.createElement("div");
-    div.className = "question-item";
-    div.textContent = q;
-    resultQuestions.appendChild(div);
+  const status = document.createElement("div");
+  status.className = "meta-line clarifying-status";
+  status.textContent = t("clarifying_status_wait");
+  resultQuestions.appendChild(status);
+
+  questions.forEach((q, idx) => {
+    const row = document.createElement("div");
+    row.className = "question-item interactive";
+    const text = document.createElement("div");
+    text.className = "question-text";
+    text.textContent = q;
+
+    const controls = document.createElement("div");
+    controls.className = "answer-controls";
+
+    ["yes", "no"].forEach((choice) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "answer-pill ghost-btn small";
+      btn.textContent = choice === "yes" ? "Yes" : "No";
+      btn.dataset.questionIndex = idx;
+      btn.dataset.choice = choice;
+      if (clarifyState.answers[idx] === (choice === "yes")) {
+        btn.classList.add("active");
+      }
+      btn.addEventListener("click", () => handleClarifyAnswer(triage, questions, idx, choice === "yes"));
+      controls.appendChild(btn);
+    });
+
+    row.appendChild(text);
+    row.appendChild(controls);
+    resultQuestions.appendChild(row);
   });
+
+  if (clarifyState.sending) {
+    status.textContent = t("clarifying_cta_sending");
+  } else if (clarifyState.done) {
+    status.textContent = t("clarifying_status_done");
+  }
+  if (clarifyState.message) {
+    status.textContent = clarifyState.message;
+  }
+}
+
+function setClarifyAnswer(index, value) {
+  clarifyState.answers = { ...clarifyState.answers, [index]: value };
+}
+
+function handleClarifyAnswer(triage, questions, index, value) {
+  setClarifyAnswer(index, value);
+  renderClarifyingQuestions(triage);
+  submitClarifyingAnswers(questions, triage);
+}
+
+async function submitClarifyingAnswers(questions, triage) {
+  if (!triage || clarifyState.sending) return;
+  clarifyState.sending = true;
+  clarifyState.done = false;
+  clarifyState.message = "";
+  renderClarifyingQuestions(triage);
+  try {
+    const payload = {
+      symptoms: triage.patient?.symptoms,
+      clarifyingQuestions: questions,
+      answers: clarifyState.answers,
+      baseSeverity: triage.severityScore,
+      baseRoute: triage.careRoute,
+      baseWaitRange: triage.waitRange,
+      patient: triage.patient,
+    };
+
+    const res = await fetch("/api/clarify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || "Clarify error");
+    }
+
+    const data = await res.json();
+    const updated = data.triage || {};
+    const merged = {
+      ...triage,
+      severityScore: updated.severityScore ?? triage.severityScore,
+      severityLabel: updated.severityLabel ?? triage.severityLabel,
+      careRoute: updated.careRoute ?? triage.careRoute,
+      waitRange: updated.waitRange ?? triage.waitRange,
+      explanation: updated.explanation || triage.explanation,
+    };
+
+    lastTriage = merged;
+    state.cases[0] = {
+      ...(state.cases[0] || {}),
+      severityScore: merged.severityScore,
+      severityLabel: merged.severityLabel,
+      careRoute: merged.careRoute,
+      waitRange: merged.waitRange,
+      explanation: merged.explanation,
+      sbar: buildSBAR(merged),
+    };
+    clarifyState.sending = false;
+    clarifyState.done = true;
+    clarifyState.message = "";
+    renderResult(merged, { preserveClarify: true });
+    renderSBAR(merged);
+    persistDashboardState();
+    renderAll();
+  } catch (err) {
+    // Fall back client-side so UX isn't blocked if clarify API is unreachable.
+    const fallback = fallbackClarifyClient(triage, clarifyState.answers);
+    const merged = {
+      ...triage,
+      severityScore: fallback.severityScore,
+      severityLabel: fallback.severityLabel,
+      careRoute: fallback.careRoute,
+      waitRange: fallback.waitRange,
+      explanation: fallback.explanation,
+    };
+    lastTriage = merged;
+    state.cases[0] = {
+      ...(state.cases[0] || {}),
+      severityScore: merged.severityScore,
+      severityLabel: merged.severityLabel,
+      careRoute: merged.careRoute,
+      waitRange: merged.waitRange,
+      explanation: merged.explanation,
+      sbar: buildSBAR(merged),
+    };
+    clarifyState.sending = false;
+    clarifyState.done = true;
+    clarifyState.message = "Clarify service unavailable; used local fallback.";
+    renderResult(merged, { preserveClarify: true });
+    renderSBAR(merged);
+    persistDashboardState();
+    renderAll();
+  }
+}
+
+function fallbackClarifyClient(triage, answers) {
+  const yesCount = Object.values(answers || {}).filter(Boolean).length;
+  const severityScore = clamp((triage?.severityScore || 2) + yesCount, 1, 5);
+  const careRoute = routeFromSeverity(severityScore);
+  const waitRange = waitRangeFor(careRoute, severityScore);
+  const explanation =
+    yesCount > 0
+      ? `Follow-up answers increased concern (${yesCount} yes). Severity adjusted locally.`
+      : "Clarify service unavailable; keeping prior severity.";
+  return {
+    severityScore,
+    severityLabel: severityLabel(severityScore),
+    careRoute,
+    waitRange,
+    explanation,
+  };
 }
 
 function renderSBAR(triage) {
-  if (!sbarText) return;
   if (!triage) {
-    sbarText.value = t("sbar_placeholder");
+    sharedSBAR = "";
+    persistDashboardState();
     return;
   }
   const sbarString = buildSBAR(triage);
-  sbarText.value = sbarString;
   sharedSBAR = sbarString;
   persistDashboardState();
 }
@@ -653,27 +806,6 @@ function bindLocateButton() {
   if (!locateBtn || mapState.locateBound) return;
   locateBtn.addEventListener("click", requestLocation);
   mapState.locateBound = true;
-}
-
-if (sbarCopyBtn && navigator.clipboard) {
-  sbarCopyBtn.addEventListener("click", () => {
-    if (!sbarText) return;
-    navigator.clipboard
-      .writeText(sbarText.value || "")
-      .then(() => {
-        const prev = sbarCopyBtn.textContent;
-        sbarCopyBtn.textContent = "Copied";
-        setTimeout(() => {
-          sbarCopyBtn.textContent = t("sbar_copy");
-        }, 1200);
-      })
-      .catch(() => {
-        sbarCopyBtn.textContent = "Copy failed";
-        setTimeout(() => {
-          sbarCopyBtn.textContent = t("sbar_copy");
-        }, 1200);
-      });
-  });
 }
 
 async function searchHospitals(origin) {

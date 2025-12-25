@@ -137,8 +137,12 @@ function renderForecast() {
     forecastGrid.appendChild(card);
   });
 
-  const sum = Object.values(load).filter(Boolean).reduce((a, b) => a + b, 0);
-  if (loadPill) loadPill.textContent = sum ? `Load: ${sum} predicted next hour` : "Predicted load updating";
+  const loadValues = Object.values(load).filter((value) => Number.isFinite(value));
+  const sum = loadValues.reduce((total, value) => total + value, 0);
+  if (loadPill) {
+    loadPill.textContent =
+      loadValues.length > 0 ? `Load: ${sum} predicted next hour` : "Predicted load updating";
+  }
 }
 
 function routeLabel(route) {
@@ -165,7 +169,7 @@ function showPatientModal(caseItem) {
 
   const card = document.createElement("div");
   card.className = "modal-card";
-  const sbarText = caseItem.sbar || state.lastSBAR || "No SBAR captured yet.";
+  const sbarText = caseItem.sbar ?? state.lastSBAR ?? "No SBAR captured yet.";
   card.innerHTML = `
     <div class="modal-head">
       <div>
@@ -188,47 +192,20 @@ function showPatientModal(caseItem) {
   modal.appendChild(card);
   document.body.appendChild(modal);
 
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) modal.remove();
-  });
-  card.querySelector("#modal-close")?.addEventListener("click", () => modal.remove());
-}
+  const closeModal = () => {
+    modal.remove();
+    document.removeEventListener("keydown", onEscape);
+  };
 
-function showPatientModal(caseItem) {
-  const modal = document.createElement("div");
-  modal.className = "modal-backdrop";
-
-  const card = document.createElement("div");
-  card.className = "modal-card";
-  const sbarText = caseItem.sbar || state.lastSBAR || "No SBAR captured yet.";
-  card.innerHTML = `
-    <div class="modal-head">
-      <div>
-        <div class="title">${caseItem.name || "Patient"}</div>
-        <div class="small">${caseItem.age ? `${caseItem.age} yrs` : ""} ${caseItem.sex || ""}</div>
-      </div>
-      <button class="ghost-btn small" id="modal-close">Close</button>
-    </div>
-    <div class="modal-body">
-      <div class="meta-line"><strong>Severity:</strong> ${caseItem.severityLabel} (${routeLabel(caseItem.careRoute)})</div>
-      <div class="meta-line"><strong>Wait:</strong> ${caseItem.waitRange || "-"} mins</div>
-      <div class="meta-line"><strong>Chief complaint:</strong> ${caseItem.symptoms || "-"}</div>
-      <div class="meta-line"><strong>Duration:</strong> ${caseItem.duration || "-"}</div>
-      <div class="meta-line"><strong>Vitals:</strong> ${caseItem.vitals || "-"}</div>
-      <div class="meta-line"><strong>SBAR:</strong></div>
-      <textarea readonly class="modal-sbar">${sbarText}</textarea>
-    </div>
-  `;
-
-  modal.appendChild(card);
-  document.body.appendChild(modal);
+  const onEscape = (event) => {
+    if (event.key === "Escape") closeModal();
+  };
 
   modal.addEventListener("click", (e) => {
-    if (e.target === modal) {
-      modal.remove();
-    }
+    if (e.target === modal) closeModal();
   });
 
   const closeBtn = card.querySelector("#modal-close");
-  closeBtn?.addEventListener("click", () => modal.remove());
+  closeBtn?.addEventListener("click", closeModal);
+  document.addEventListener("keydown", onEscape);
 }
