@@ -389,15 +389,40 @@ h3 {
   margin: 4px 0;
 }
 
-.modal-sbar {
+.modal-sbar-block {
   width: 100%;
-  min-height: 120px;
+}
+
+.sbar-blocks {
+  display: grid;
+  gap: 10px;
+}
+
+.sbar-item {
+  padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(60, 242, 192, 0.2);
+  background: rgba(60, 242, 192, 0.06);
+}
+
+.sbar-label {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8ef3d7;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.sbar-body {
   color: var(--text);
-  padding: 10px;
-  resize: vertical;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.sbar-key {
+  color: #a8c5ff;
+  font-weight: 700;
 }
 
 .clarifying-card .meta-line {

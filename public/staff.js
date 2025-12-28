@@ -185,7 +185,7 @@ function showPatientModal(caseItem) {
       <div class="meta-line"><strong>Duration:</strong> ${caseItem.duration || "-"}</div>
       <div class="meta-line"><strong>Vitals:</strong> ${caseItem.vitals || "-"}</div>
       <div class="meta-line"><strong>SBAR:</strong></div>
-      <textarea readonly class="modal-sbar">${sbarText}</textarea>
+      <div class="modal-sbar-block" aria-label="SBAR summary"></div>
     </div>
   `;
 
@@ -208,4 +208,63 @@ function showPatientModal(caseItem) {
   const closeBtn = card.querySelector("#modal-close");
   closeBtn?.addEventListener("click", closeModal);
   document.addEventListener("keydown", onEscape);
+
+  const sbarContainer = card.querySelector(".modal-sbar-block");
+  renderSBARBlocks(sbarContainer, sbarText);
+}
+
+function renderSBARBlocks(container, sbarText) {
+  if (!container) return;
+  container.innerHTML = "";
+  const content = sbarText && sbarText.trim() ? sbarText : "No SBAR captured yet.";
+  const wrapper = document.createElement("div");
+  wrapper.className = "sbar-blocks";
+
+  content.split("\n").forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    const match = trimmed.match(/^([^:]+):\s*(.*)$/);
+    const labelText = match ? match[1] : "Note";
+    const bodyText = match ? match[2] : trimmed;
+
+    const item = document.createElement("div");
+    item.className = "sbar-item";
+
+    const label = document.createElement("div");
+    label.className = "sbar-label";
+    label.textContent = `${labelText}:`;
+
+    const body = document.createElement("div");
+    body.className = "sbar-body";
+    body.appendChild(highlightSBARBody(bodyText));
+
+    item.append(label, body);
+    wrapper.appendChild(item);
+  });
+
+  container.appendChild(wrapper);
+}
+
+function highlightSBARBody(text) {
+  const keywords = ["age", "sex", "vitals", "history", "severity", "route", "wait", "clarifying", "chief complaint", "duration"];
+  const regex = new RegExp(`\\b(${keywords.join("|")})\\b`, "gi");
+  const fragment = document.createDocumentFragment();
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(regex)) {
+    if (match.index > lastIndex) {
+      fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+    }
+    const keySpan = document.createElement("span");
+    keySpan.className = "sbar-key";
+    keySpan.textContent = match[0];
+    fragment.appendChild(keySpan);
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+
+  return fragment;
 }

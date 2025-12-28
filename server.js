@@ -1,11 +1,24 @@
 const express = require("express");
 const path = require("path");
 
+// --- Express app setup ---
 const app = express();
 const PORT = process.env.PORT || 3000;
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_URL = GEMINI_KEY
+  ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`
+  : "";
+const GEMINI_CONFIG = {
+  generationConfig: {
+    response_mime_type: "application/json",
+    temperature: 0.2,
+  },
+};
+const clarifyCache = new Map();
+const CLARIFY_CACHE_MAX = 100;
 
 app.enable("trust proxy");
+// Redirect plain HTTP to HTTPS in production.
 app.use((req, res, next) => {
   if (process.env.NODE_ENV === "production" && req.headers["x-forwarded-proto"] === "http") {
     const host = req.headers.host || "";
@@ -17,6 +30,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// --- Triage routes ---
 app.post("/api/triage", async (req, res) => {
   const { name, age, sex, duration, symptoms, vitals = {}, history = "" } = req.body || {};
 
@@ -59,17 +73,7 @@ app.post("/api/clarify", async (req, res) => {
   }
 
   try {
-    const aiResult = await callGeminiClarify({
-      symptoms,
-      clarifyingQuestions,
-      answers,
-      baseSeverity,
-      baseRoute,
-      baseWaitRange,
-      geminiEnabled: Boolean(GEMINI_KEY),
-    });
-
-    const triage = normalizeClarify(aiResult, {
+    const { triage } = await handleClarifyRequest({
       symptoms,
       clarifyingQuestions,
       answers,
@@ -77,6 +81,7 @@ app.post("/api/clarify", async (req, res) => {
       baseRoute,
       baseWaitRange,
       patient,
+      geminiEnabled: Boolean(GEMINI_KEY),
     });
 
     res.json({ triage });
@@ -86,10 +91,13 @@ app.post("/api/clarify", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`PulseRoute running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`PulseRoute running on http://localhost:${PORT}`);
+  });
+}
 
+// --- Gemini calls ---
 async function callGemini({ symptoms, age, vitals, history, geminiEnabled }) {
   const basePrompt = [
     "You are a hospital triage assistant.",
@@ -119,40 +127,7 @@ Return JSON with: severity_score, care_route, wait_range_minutes, extracted_feat
     return fallbackHeuristic({ symptoms, age });
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`;
-
-  const body = {
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: {
-      response_mime_type: "application/json",
-      temperature: 0.2,
-    },
-  };
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Gemini error: ${response.status} ${text}`);
-  }
-
-  const data = await response.json();
-  const candidate = data?.candidates?.[0];
-  const textPart = candidate?.content?.parts?.[0]?.text;
-
-  if (!textPart) {
-    throw new Error("No Gemini content returned");
-  }
-
-  try {
-    return JSON.parse(textPart);
-  } catch (err) {
-    throw new Error(`Gemini JSON parse failed: ${err.message}`);
-  }
+  return sendGeminiRequest({ prompt, errorLabel: "Gemini" });
 }
 
 async function callGeminiClarify({
@@ -187,37 +162,10 @@ async function callGeminiClarify({
     return fallbackClarify({ baseSeverity, baseRoute, baseWaitRange, answers });
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`;
-  const body = {
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: {
-      response_mime_type: "application/json",
-      temperature: 0.2,
-    },
-  };
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Gemini clarify error: ${response.status} ${text}`);
-  }
-
-  const data = await response.json();
-  const candidate = data?.candidates?.[0];
-  const textPart = candidate?.content?.parts?.[0]?.text;
-  if (!textPart) throw new Error("No Gemini clarify content returned");
-  try {
-    return JSON.parse(textPart);
-  } catch (err) {
-    throw new Error(`Gemini clarify JSON parse failed: ${err.message}`);
-  }
+  return sendGeminiRequest({ prompt, errorLabel: "Gemini clarify" });
 }
 
+// --- Fallback heuristics and normalizers ---
 function fallbackClarify({ baseSeverity, baseRoute, baseWaitRange, answers }) {
   const yesCount = Object.values(answers || {}).filter(Boolean).length;
   const newSeverity = clamp((Number(baseSeverity) || 2) + yesCount, 1, 5);
@@ -238,8 +186,22 @@ function fallbackHeuristic({ symptoms, age }) {
   let severity = 2;
   let careRoute = "telehealth";
 
-  const redFlags = ["chest pain", "shortness of breath", "faint", "bleeding", "vision loss", "stroke", "numbness", "confusion"];
-  const urgentFlags = ["fever", "vomit", "fracture", "sprain", "severe pain", "burn"];
+  const redFlags = [
+    "chest pain",
+    "shortness of breath",
+    "can't breathe",
+    "cannot breathe",
+    "coughing up blood",
+    "cough blood",
+    "hemoptysis",
+    "faint",
+    "bleeding",
+    "vision loss",
+    "stroke",
+    "numbness",
+    "confusion",
+  ];
+  const urgentFlags = ["fever", "vomit", "fracture", "sprain", "severe pain", "burn", "asthma", "wheezing"];
 
   if (redFlags.some((term) => lower.includes(term))) {
     severity = 5;
@@ -265,10 +227,8 @@ function fallbackHeuristic({ symptoms, age }) {
 }
 
 function normalizeTriage(aiResult, patient) {
-  const severityScore = clamp(Number(aiResult.severity_score) || 2, 1, 5);
-  const careRoute = ["er", "urgent_care", "telehealth"].includes(aiResult.care_route)
-    ? aiResult.care_route
-    : routeFromSeverity(severityScore);
+  const severityScore = clamp(parseSeverity(aiResult.severity_score, 2), 1, 5);
+  const careRoute = mergeCareRoute(aiResult.care_route, severityScore);
   const waitRange = aiResult.wait_range_minutes || waitRangeFor(careRoute, severityScore);
   const clarifyingQuestions = Array.isArray(aiResult.clarifying_questions) ? aiResult.clarifying_questions.slice(0, 3) : [];
 
@@ -286,10 +246,8 @@ function normalizeTriage(aiResult, patient) {
 }
 
 function normalizeClarify(aiResult, context) {
-  const severityScore = clamp(Number(aiResult.severity_score) || Number(context.baseSeverity) || 2, 1, 5);
-  const careRoute = ["er", "urgent_care", "telehealth"].includes(aiResult.care_route)
-    ? aiResult.care_route
-    : routeFromSeverity(severityScore);
+  const severityScore = clamp(parseSeverity(aiResult.severity_score, parseSeverity(context.baseSeverity, 2)), 1, 5);
+  const careRoute = mergeCareRoute(aiResult.care_route, severityScore);
   const waitRange = aiResult.wait_range_minutes || context.baseWaitRange || waitRangeFor(careRoute, severityScore);
 
   return {
@@ -356,3 +314,140 @@ function buildClarifyingQuestions({ redFlags, urgentFlags, lower }) {
 }
 
 module.exports = app;
+module.exports._internal = {
+  callGemini,
+  callGeminiClarify,
+  fallbackClarify,
+  fallbackHeuristic,
+  normalizeClarify,
+  normalizeTriage,
+  routeFromSeverity,
+  waitRangeFor,
+  severityLabel,
+  clamp,
+  parseSeverity,
+  mergeCareRoute,
+  buildForecast,
+  randomRange,
+  buildClarifyingQuestions,
+  sendGeminiRequest,
+  handleClarifyRequest,
+  buildClarifyCacheKey,
+  clarifyCache,
+};
+
+async function sendGeminiRequest({ prompt, errorLabel }) {
+  const body = { ...GEMINI_CONFIG, contents: [{ parts: [{ text: prompt }] }] };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+
+  try {
+    const response = await fetch(GEMINI_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`${errorLabel} error: ${response.status} ${text}`);
+    }
+
+    const data = await response.json();
+    const candidate = data?.candidates?.[0];
+    const textPart = candidate?.content?.parts?.[0]?.text;
+    if (!textPart) throw new Error(`No ${errorLabel} content returned`);
+    try {
+      return JSON.parse(textPart);
+    } catch (parseErr) {
+      throw new Error(`${errorLabel} JSON parse failed: ${parseErr.message}`);
+    }
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error(`${errorLabel} request timed out`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// --- Clarify helpers ---
+async function handleClarifyRequest(payload) {
+  const cacheKey = buildClarifyCacheKey(payload);
+  const cached = clarifyCache.get(cacheKey);
+  if (cached) return cached;
+
+  const aiResult = await callGeminiClarify({
+    symptoms: payload.symptoms,
+    clarifyingQuestions: payload.clarifyingQuestions,
+    answers: payload.answers,
+    baseSeverity: payload.baseSeverity,
+    baseRoute: payload.baseRoute,
+    baseWaitRange: payload.baseWaitRange,
+    geminiEnabled: payload.geminiEnabled,
+  });
+
+  const triage = normalizeClarify(aiResult, payload);
+  const response = { triage };
+  clarifyCache.set(cacheKey, response);
+  if (clarifyCache.size > CLARIFY_CACHE_MAX) {
+    const firstKey = clarifyCache.keys().next().value;
+    clarifyCache.delete(firstKey);
+  }
+  return response;
+}
+
+function buildClarifyCacheKey({
+  symptoms,
+  clarifyingQuestions,
+  answers,
+  baseRoute,
+  baseWaitRange,
+  patient = {},
+}) {
+  return JSON.stringify({
+    symptoms,
+    clarifyingQuestions,
+    answers,
+    baseRoute,
+    baseWaitRange,
+    patientId: patient.id || patient.name || "",
+  });
+}
+
+function parseSeverity(value, fallback) {
+  const labelMap = {
+    critical: 5,
+    high: 4,
+    moderate: 3,
+    medium: 3,
+    low: 2,
+    minimal: 1,
+    mild: 2,
+  };
+
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric)) return numeric;
+    const digitMatch = value.match(/[1-5]/);
+    if (digitMatch) return Number(digitMatch[0]);
+    const normalized = value.trim().toLowerCase();
+    if (labelMap[normalized]) return labelMap[normalized];
+  }
+  return fallback;
+}
+
+function mergeCareRoute(aiRoute, severityScore) {
+  const validRoutes = ["er", "urgent_care", "telehealth"];
+  const severityRoute = routeFromSeverity(severityScore);
+  if (!validRoutes.includes(aiRoute)) return severityRoute;
+
+  const priority = { er: 3, urgent_care: 2, telehealth: 1 };
+  const aiPriority = priority[aiRoute];
+  const severityPriority = priority[severityRoute];
+
+  return aiPriority >= severityPriority ? aiRoute : severityRoute;
+}
