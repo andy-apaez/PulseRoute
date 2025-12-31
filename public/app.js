@@ -114,6 +114,33 @@ const translations = {
     clarifying_status_done: "Sent to Gemini; severity updated if needed.",
     clarifying_cta_send: "Send answers to Gemini",
     clarifying_cta_sending: "Sending...",
+    map_eyebrow: "Local routing",
+    map_title: "Find your nearest hospital",
+    map_lede: "Use OpenStreetMap data to jump to nearby hospitals and send patients the fastest route.",
+    map_cta: "Use my location",
+    map_list_title: "Hospitals nearby",
+    map_list_hint: 'Tap "Use my location" to search within ~10km.',
+    map_loading: "Loading map...",
+    map_lib_failed: "Map library failed to load",
+    map_ready: "Map ready — use your location",
+    map_not_ready: "Map unavailable or still initializing",
+    map_geo_missing: "Geolocation unavailable in this browser",
+    map_https: "Enable HTTPS to use location",
+    map_requesting: "Requesting your location...",
+    map_searching: "Searching nearby hospitals...",
+    map_search_hint: "Searching within ~10km...",
+    map_none: "No hospitals found nearby",
+    map_none_hint: "No hospitals found within ~10km.",
+    map_search_failed: "Search failed",
+    map_search_failed_detail: "Search failed: {error}",
+    map_found: "Found {count} nearby",
+    map_place_no_phone: "No phone listed",
+    map_directions: "Directions",
+    map_distance: "{km} km away",
+    geo_blocked: "Location was blocked. Allow access to search nearby hospitals.",
+    geo_unavailable: "Location unavailable. Check signal or try again.",
+    geo_timeout: "Location timed out. Try again.",
+    geo_error: "Could not access location.",
   },
   es: {
     eyebrow_intake: "Ingreso de pacientes",
@@ -148,6 +175,33 @@ const translations = {
     clarifying_status_done: "Enviado a Gemini; gravedad ajustada si era necesario.",
     clarifying_cta_send: "Enviar respuestas a Gemini",
     clarifying_cta_sending: "Enviando...",
+    map_eyebrow: "Enrutamiento local",
+    map_title: "Encuentra tu hospital más cercano",
+    map_lede: "Usa datos de OpenStreetMap para saltar a los hospitales cercanos y enviar la ruta más rápida.",
+    map_cta: "Usar mi ubicación",
+    map_list_title: "Hospitales cercanos",
+    map_list_hint: 'Toca "Usar mi ubicación" para buscar dentro de ~10km.',
+    map_loading: "Cargando mapa...",
+    map_lib_failed: "Error al cargar la librería del mapa",
+    map_ready: "Mapa listo — usa tu ubicación",
+    map_not_ready: "Mapa no disponible o iniciando",
+    map_geo_missing: "Geolocalización no disponible en este navegador",
+    map_https: "Habilita HTTPS para usar ubicación",
+    map_requesting: "Solicitando tu ubicación...",
+    map_searching: "Buscando hospitales cercanos...",
+    map_search_hint: "Buscando dentro de ~10km...",
+    map_none: "No se encontraron hospitales cercanos",
+    map_none_hint: "No hay hospitales dentro de ~10km.",
+    map_search_failed: "Búsqueda falló",
+    map_search_failed_detail: "Búsqueda falló: {error}",
+    map_found: "Se encontraron {count} cercanos",
+    map_place_no_phone: "Sin teléfono listado",
+    map_directions: "Cómo llegar",
+    map_distance: "{km} km de distancia",
+    geo_blocked: "La ubicación fue bloqueada. Permite acceso para buscar hospitales.",
+    geo_unavailable: "Ubicación no disponible. Revisa la señal o intenta de nuevo.",
+    geo_timeout: "La ubicación tardó demasiado. Intenta de nuevo.",
+    geo_error: "No se pudo acceder a la ubicación.",
   },
   zh: {
     eyebrow_intake: "患者分诊",
@@ -182,6 +236,33 @@ const translations = {
     clarifying_status_done: "已发送给 Gemini；如需已调整严重度。",
     clarifying_cta_send: "发送回答给 Gemini",
     clarifying_cta_sending: "发送中...",
+    map_eyebrow: "本地路线",
+    map_title: "寻找最近的医院",
+    map_lede: "使用 OpenStreetMap 数据快速找到附近医院并发送最快路线。",
+    map_cta: "使用我的位置",
+    map_list_title: "附近的医院",
+    map_list_hint: "点击“使用我的位置”搜索 ~10 公里内。",
+    map_loading: "地图加载中...",
+    map_lib_failed: "地图库加载失败",
+    map_ready: "地图已就绪 — 使用你的位置",
+    map_not_ready: "地图不可用或仍在初始化",
+    map_geo_missing: "浏览器不支持地理位置",
+    map_https: "请在 HTTPS 下启用定位",
+    map_requesting: "正在请求你的位置...",
+    map_searching: "正在搜索附近医院...",
+    map_search_hint: "正在搜索约 10 公里范围内...",
+    map_none: "附近没有找到医院",
+    map_none_hint: "在 ~10 公里内未找到医院。",
+    map_search_failed: "搜索失败",
+    map_search_failed_detail: "搜索失败：{error}",
+    map_found: "找到 {count} 个附近地点",
+    map_place_no_phone: "没有电话号码",
+    map_directions: "路线",
+    map_distance: "{km} 公里外",
+    geo_blocked: "位置被阻止。允许访问以搜索附近医院。",
+    geo_unavailable: "位置不可用。检查信号或重试。",
+    geo_timeout: "定位超时。请再试一次。",
+    geo_error: "无法获取位置。",
   },
   ar: {
     eyebrow_intake: "استقبال المرضى",
@@ -216,6 +297,33 @@ const translations = {
     clarifying_status_done: "أُرسلت إلى Gemini؛ تم تعديل الشدة إن لزم.",
     clarifying_cta_send: "إرسال الإجابات إلى Gemini",
     clarifying_cta_sending: "جارٍ الإرسال...",
+    map_eyebrow: "التوجيه المحلي",
+    map_title: "ابحث عن أقرب مستشفى",
+    map_lede: "استخدم بيانات OpenStreetMap للقفز إلى المستشفيات القريبة وإرسال أسرع مسار.",
+    map_cta: "استخدام موقعي",
+    map_list_title: "مستشفيات قريبة",
+    map_list_hint: 'اضغط "استخدام موقعي" للبحث ضمن ~10 كم.',
+    map_loading: "يتم تحميل الخريطة...",
+    map_lib_failed: "فشل تحميل مكتبة الخريطة",
+    map_ready: "الخريطة جاهزة — استخدم موقعك",
+    map_not_ready: "الخريطة غير متاحة أو ما زالت تبدأ",
+    map_geo_missing: "المتصفح لا يدعم تحديد الموقع",
+    map_https: "فعّل HTTPS لاستخدام الموقع",
+    map_requesting: "يتم طلب موقعك...",
+    map_searching: "جاري البحث عن مستشفيات قريبة...",
+    map_search_hint: "بحث ضمن ~10 كم...",
+    map_none: "لا توجد مستشفيات قريبة",
+    map_none_hint: "لم يتم العثور على مستشفيات ضمن ~10 كم.",
+    map_search_failed: "فشل البحث",
+    map_search_failed_detail: "فشل البحث: {error}",
+    map_found: "تم العثور على {count} قريبة",
+    map_place_no_phone: "لا يوجد هاتف مسجّل",
+    map_directions: "الاتجاهات",
+    map_distance: "{km} كم بعيدًا",
+    geo_blocked: "تم حظر الموقع. اسمح بالوصول للبحث عن مستشفيات قريبة.",
+    geo_unavailable: "الموقع غير متاح. تحقق من الإشارة أو أعد المحاولة.",
+    geo_timeout: "انتهت مهلة تحديد الموقع. حاول مرة أخرى.",
+    geo_error: "تعذر الوصول إلى الموقع.",
   },
 };
 
@@ -244,6 +352,16 @@ function applyLanguage(lang) {
   if (resultSeverity?.textContent === "-" && resultRoute?.textContent === "-") {
     if (resultTitle) resultTitle.textContent = t("result_waiting_title");
     if (resultText) resultText.textContent = t("result_waiting_body");
+  }
+
+  if (mapStatus?.dataset.key) {
+    let vars = {};
+    try {
+      vars = mapStatus.dataset.vars ? JSON.parse(mapStatus.dataset.vars) : {};
+    } catch (err) {
+      vars = {};
+    }
+    setMapStatus(mapStatus.dataset.key, mapStatus.dataset.tone || "", vars);
   }
 
   localStorage.setItem("lang", currentLang);
@@ -471,9 +589,14 @@ function severityClass(score) {
   return "severity-low";
 }
 
-function t(key) {
+function t(key, vars = {}) {
   const dict = translations[currentLang] || translations.en;
-  return dict[key] || translations.en[key] || key;
+  const base = dict[key] || translations.en[key];
+  if (!base) return key;
+  return base.replace(/\{(\w+)\}/g, (match, token) => {
+    if (token in vars) return vars[token];
+    return match;
+  });
 }
 
 function formatValue(value) {
@@ -735,11 +858,11 @@ function persistDashboardState() {
 async function initMapsSection() {
   if (!mapStatus || !mapContainer || !placesList) return;
 
-  setMapStatus("Loading map...", "ghost");
+  setMapStatus("map_loading", "ghost");
   if (locateBtn) locateBtn.disabled = true;
 
   if (!window.L) {
-    setMapStatus("Map library failed to load", "muted");
+    setMapStatus("map_lib_failed", "muted");
     if (locateBtn) locateBtn.disabled = false;
     return;
   }
@@ -755,7 +878,7 @@ async function initMapsSection() {
   }).addTo(mapState.map);
 
   mapState.ready = true;
-  setMapStatus("Map ready — use your location", "ghost");
+  setMapStatus("map_ready", "ghost");
   mapContainer.querySelector(".map-placeholder")?.remove();
   if (locateBtn) locateBtn.disabled = false;
 
@@ -764,24 +887,24 @@ async function initMapsSection() {
 
 function requestLocation() {
   if (!mapState.map || !mapState.ready) {
-    setMapStatus("Map unavailable or still initializing", "muted");
+    setMapStatus("map_not_ready", "muted");
     if (locateBtn) locateBtn.disabled = false;
     return;
   }
 
   if (!navigator.geolocation) {
-    setMapStatus("Geolocation unavailable in this browser", "muted");
+    setMapStatus("map_geo_missing", "muted");
     if (locateBtn) locateBtn.disabled = false;
     return;
   }
 
   if (!window.isSecureContext && !location.hostname.includes("localhost")) {
-    setMapStatus("Enable HTTPS to use location", "muted");
+    setMapStatus("map_https", "muted");
     if (locateBtn) locateBtn.disabled = false;
     return;
   }
 
-  setMapStatus("Requesting your location...", "ghost");
+  setMapStatus("map_requesting", "ghost");
   if (locateBtn) locateBtn.disabled = true;
 
   navigator.geolocation.getCurrentPosition(
@@ -794,8 +917,9 @@ function requestLocation() {
     },
     (err) => {
       console.warn("Geolocation blocked", err);
-      setMapStatus(geoErrorMessage(err), "muted");
-      placesList.innerHTML = `<div class="meta-line">${geoErrorMessage(err)}</div>`;
+      const geoKey = geoErrorMessage(err);
+      setMapStatus(geoKey, "muted");
+      placesList.innerHTML = `<div class="meta-line">${t(geoKey)}</div>`;
       if (locateBtn) locateBtn.disabled = false;
     },
     { enableHighAccuracy: true, timeout: 10000 }
@@ -809,8 +933,8 @@ function bindLocateButton() {
 }
 
 async function searchHospitals(origin) {
-  setMapStatus("Searching nearby hospitals...", "ghost");
-  placesList.innerHTML = `<div class="meta-line">Searching within ~10km...</div>`;
+  setMapStatus("map_searching", "ghost");
+  placesList.innerHTML = `<div class="meta-line">${t("map_search_hint")}</div>`;
   clearMarkers();
 
   const query = `[out:json];
@@ -847,8 +971,8 @@ async function searchHospitals(origin) {
         .filter(Boolean) || [];
 
     if (!places.length) {
-      setMapStatus("No hospitals found nearby", "muted");
-      placesList.innerHTML = `<div class="meta-line">No hospitals found within ~10km.</div>`;
+      setMapStatus("map_none", "muted");
+      placesList.innerHTML = `<div class="meta-line">${t("map_none_hint")}</div>`;
       return;
     }
 
@@ -878,11 +1002,11 @@ async function searchHospitals(origin) {
     mapState.map.fitBounds(bounds, { padding: [20, 20] });
 
     renderPlaces(limited, origin);
-    setMapStatus(`Found ${limited.length} nearby`, "online");
+    setMapStatus("map_found", "online", { count: limited.length });
   } catch (err) {
     console.error("Hospital search failed", err);
-    setMapStatus("Search failed", "muted");
-    placesList.innerHTML = `<div class="meta-line">Search failed: ${err.message}</div>`;
+    setMapStatus("map_search_failed", "muted");
+    placesList.innerHTML = `<div class="meta-line">${t("map_search_failed_detail", { error: err.message })}</div>`;
   }
 }
 
@@ -890,7 +1014,7 @@ function renderPlaces(places, origin) {
   placesList.innerHTML = "";
   places.forEach((place) => {
     const distanceKm = origin ? haversineKm(origin, { lat: place.lat, lng: place.lon }) : place.distanceKm;
-    const contact = place.phone ? place.phone : "No phone listed";
+    const contact = place.phone ? place.phone : t("map_place_no_phone");
     const directionsUrl = origin ? buildDirectionsLink(origin, place) : null;
 
     const item = document.createElement("div");
@@ -899,8 +1023,8 @@ function renderPlaces(places, origin) {
       <div class="title">${escapeHtml(place.name)}</div>
       <div class="meta-line">${escapeHtml(place.address)}</div>
       <div class="meta-line">${escapeHtml(contact)}</div>
-      ${distanceKm ? `<div class="distance">${distanceKm.toFixed(1)} km away</div>` : ""}
-      ${directionsUrl ? `<a class="meta-line" href="${directionsUrl}" target="_blank" rel="noopener">Directions</a>` : ""}
+      ${distanceKm ? `<div class="distance">${t("map_distance", { km: distanceKm.toFixed(1) })}</div>` : ""}
+      ${directionsUrl ? `<a class="meta-line" href="${directionsUrl}" target="_blank" rel="noopener">${t("map_directions")}</a>` : ""}
     `;
     placesList.appendChild(item);
   });
@@ -917,9 +1041,13 @@ function clearMarkers() {
   mapState.markers = [];
 }
 
-function setMapStatus(text, tone) {
+function setMapStatus(textOrKey, tone, vars = {}) {
   if (!mapStatus) return;
+  const text = t(textOrKey, vars);
   mapStatus.textContent = text;
+  mapStatus.dataset.key = textOrKey;
+  mapStatus.dataset.tone = tone || "";
+  mapStatus.dataset.vars = vars && Object.keys(vars).length ? JSON.stringify(vars) : "";
   mapStatus.className = tone ? `pill ${tone}` : "pill";
 }
 
@@ -996,9 +1124,9 @@ function escapeHtml(input) {
 }
 
 function geoErrorMessage(err) {
-  if (!err || typeof err.code !== "number") return "Could not access location.";
-  if (err.code === err.PERMISSION_DENIED) return "Location was blocked. Allow access to search nearby hospitals.";
-  if (err.code === err.POSITION_UNAVAILABLE) return "Location unavailable. Check signal or try again.";
-  if (err.code === err.TIMEOUT) return "Location timed out. Try again.";
-  return "Could not access location.";
+  if (!err || typeof err.code !== "number") return "geo_error";
+  if (err.code === err.PERMISSION_DENIED) return "geo_blocked";
+  if (err.code === err.POSITION_UNAVAILABLE) return "geo_unavailable";
+  if (err.code === err.TIMEOUT) return "geo_timeout";
+  return "geo_error";
 }

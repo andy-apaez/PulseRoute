@@ -1,17 +1,50 @@
 :root {
-  --bg: #0b1220;
-  --bg-2: #0f1c2f;
-  --card: #101a2b;
-  --card-2: #12243d;
-  --accent: #3cf2c0;
-  --accent-2: #7bd7ff;
-  --text: #e5ecf4;
-  --muted: #9cb4cd;
+  --bg: #f9fafc;
+  --bg-2: #ffffff;
+  --card: #ffffff;
+  --card-2: #f3f4f8;
+  --panel: rgba(255, 255, 255, 0.92);
+  --panel-2: rgba(255, 255, 255, 0.86);
+  --accent: #d7263d;
+  --accent-2: #b3122d;
+  --accent-soft: rgba(215, 38, 61, 0.12);
+  --text: #161823;
+  --muted: #5d6673;
+  --danger: #d7263d;
+  --warn: #f08c42;
+  --ok: #2ca46f;
+  --border: rgba(22, 24, 35, 0.1);
+  --border-strong: rgba(22, 24, 35, 0.16);
+  --ghost: rgba(22, 24, 35, 0.05);
+  --ghost-border: rgba(22, 24, 35, 0.12);
+  --input-bg: #ffffff;
+  --input-border: rgba(22, 24, 35, 0.16);
+  --shadow: 0 14px 50px rgba(15, 18, 32, 0.12);
+  --radius: 14px;
+}
+
+:root[data-theme="night"] {
+  --bg: #0e0b11;
+  --bg-2: #140f18;
+  --card: #14121b;
+  --card-2: #1b1722;
+  --panel: rgba(20, 18, 27, 0.94);
+  --panel-2: rgba(20, 18, 27, 0.86);
+  --accent: #ff4d5a;
+  --accent-2: #d7263d;
+  --accent-soft: rgba(255, 77, 90, 0.18);
+  --text: #f6f7fb;
+  --muted: #b3b9c6;
   --danger: #ff7f6a;
   --warn: #f3c969;
   --ok: #6ff7a7;
-  --shadow: 0 10px 50px rgba(0, 0, 0, 0.35);
-  --radius: 14px;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --ghost: rgba(255, 255, 255, 0.06);
+  --ghost-border: rgba(255, 255, 255, 0.12);
+  --input-bg: #0f0c14;
+  --input-border: rgba(255, 255, 255, 0.12);
+  --shadow: 0 14px 50px rgba(0, 0, 0, 0.45);
 }
 
 * {
@@ -21,11 +54,12 @@
 body {
   margin: 0;
   font-family: "Space Grotesk", "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
-  background: radial-gradient(circle at 20% 20%, rgba(60, 242, 192, 0.08), transparent 30%),
-    radial-gradient(circle at 80% 10%, rgba(123, 215, 255, 0.1), transparent 35%),
-    linear-gradient(180deg, #0b1220 0%, #0c1423 30%, #0b1220 100%);
+  background: radial-gradient(circle at 18% 20%, rgba(215, 38, 61, 0.08), transparent 32%),
+    radial-gradient(circle at 82% 18%, rgba(179, 18, 45, 0.08), transparent 36%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 36%, var(--bg) 100%);
   color: var(--text);
   min-height: 100vh;
+  transition: background 0.3s ease, color 0.2s ease;
 }
 
 .page {
@@ -65,11 +99,17 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: rgba(16, 26, 43, 0.8);
+  background: linear-gradient(135deg, var(--panel), var(--panel-2));
   box-shadow: var(--shadow);
   backdrop-filter: blur(8px);
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .brand {
@@ -83,7 +123,7 @@ body {
   height: 14px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  box-shadow: 0 0 16px rgba(60, 242, 192, 0.6);
+  box-shadow: 0 0 18px rgba(215, 38, 61, 0.35);
 }
 
 .brand-title {
@@ -102,16 +142,16 @@ body {
   gap: 6px;
   padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ghost);
   color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--ghost-border);
   font-size: 13px;
 }
 
 .pill.online {
-  background: rgba(60, 242, 192, 0.14);
-  color: #b8ffe6;
-  border-color: rgba(60, 242, 192, 0.5);
+  background: var(--accent-soft);
+  color: var(--accent-2);
+  border-color: rgba(215, 38, 61, 0.24);
 }
 
 .pill.muted {
@@ -120,25 +160,25 @@ body {
 
 .pill.ghost {
   background: transparent;
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: var(--ghost-border);
 }
 
 .pill.severity-high {
-  background: rgba(255, 127, 106, 0.15);
-  border-color: rgba(255, 127, 106, 0.6);
-  color: #ffc9c0;
+  background: rgba(215, 38, 61, 0.14);
+  border-color: rgba(215, 38, 61, 0.45);
+  color: var(--accent-2);
 }
 
 .pill.severity-med {
   background: rgba(243, 201, 105, 0.14);
   border-color: rgba(243, 201, 105, 0.5);
-  color: #ffe5b4;
+  color: #b57405;
 }
 
 .pill.severity-low {
   background: rgba(111, 247, 167, 0.14);
   border-color: rgba(111, 247, 167, 0.5);
-  color: #c9ffe2;
+  color: #1f7c4c;
 }
 .grid {
   display: flex;
@@ -148,8 +188,8 @@ body {
 }
 
 .panel {
-  background: rgba(16, 26, 43, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, var(--panel), var(--panel-2));
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 22px;
   box-shadow: var(--shadow);
@@ -217,9 +257,9 @@ h3 {
 }
 
 .lang-switch select {
-  background: rgba(12, 20, 35, 0.9);
+  background: var(--input-bg);
   color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--input-border);
   border-radius: 10px;
   padding: 8px 10px;
 }
@@ -246,11 +286,11 @@ h3 {
 }
 
 .card {
-  background: linear-gradient(180deg, rgba(18, 36, 61, 0.9), rgba(16, 26, 43, 0.92));
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, var(--card), var(--card-2));
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 18px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 var(--border);
 }
 
 .row.two {
@@ -271,8 +311,8 @@ h3 {
   width: 100%;
   padding: 12px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(12, 20, 35, 0.9);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
   color: var(--text);
   font-size: 14px;
 }
@@ -281,8 +321,8 @@ h3 {
   width: 100%;
   padding: 12px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(12, 20, 35, 0.9);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
   color: var(--text);
   font-size: 14px;
 }
@@ -293,11 +333,11 @@ h3 {
   border-radius: 12px;
   border: none;
   background: linear-gradient(120deg, var(--accent), var(--accent-2));
-  color: #0a1322;
+  color: #ffffff;
   font-weight: 700;
   letter-spacing: 0.2px;
   cursor: pointer;
-  box-shadow: 0 10px 25px rgba(60, 242, 192, 0.2);
+  box-shadow: 0 10px 25px rgba(215, 38, 61, 0.18);
 }
 
 .cta.small {
@@ -310,7 +350,7 @@ h3 {
 }
 
 .result {
-  border-color: rgba(60, 242, 192, 0.15);
+  border-color: var(--accent-soft);
 }
 
 .result-pills {
@@ -333,9 +373,9 @@ h3 {
 
 .feature {
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ghost);
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
 }
 
 .feature .label {
@@ -350,12 +390,12 @@ h3 {
 .item.clickable {
   text-align: left;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  background: var(--ghost);
 }
 
 .item.clickable:hover {
-  border-color: rgba(60, 242, 192, 0.35);
+  border-color: rgba(215, 38, 61, 0.35);
 }
 
 .modal-backdrop {
@@ -370,8 +410,8 @@ h3 {
 
 .modal-card {
   width: min(520px, 90vw);
-  background: rgba(16, 26, 43, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, var(--card), var(--card-2));
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
   box-shadow: var(--shadow);
@@ -401,15 +441,15 @@ h3 {
 .sbar-item {
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(60, 242, 192, 0.2);
-  background: rgba(60, 242, 192, 0.06);
+  border: 1px solid rgba(215, 38, 61, 0.22);
+  background: var(--accent-soft);
 }
 
 .sbar-label {
   font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #8ef3d7;
+  color: var(--accent-2);
   font-weight: 700;
   margin-bottom: 4px;
 }
@@ -421,7 +461,7 @@ h3 {
 }
 
 .sbar-key {
-  color: #a8c5ff;
+  color: var(--accent);
   font-weight: 700;
 }
 
@@ -456,8 +496,8 @@ h3 {
 }
 
 .answer-pill.active {
-  border-color: rgba(60, 242, 192, 0.35);
-  background: rgba(60, 242, 192, 0.08);
+  border-color: rgba(215, 38, 61, 0.35);
+  background: var(--accent-soft);
 }
 
 .clarifying-status {
@@ -479,8 +519,8 @@ h3 {
 .question-item {
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px dashed rgba(255, 255, 255, 0.08);
+  background: var(--ghost);
+  border: 1px dashed var(--border);
   color: var(--muted);
   font-size: 13px;
 }
@@ -505,11 +545,11 @@ h3 {
   height: 100%;
   border-radius: var(--radius);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: radial-gradient(circle at 20% 20%, rgba(60, 242, 192, 0.05), transparent 25%),
-    radial-gradient(circle at 80% 20%, rgba(123, 215, 255, 0.08), transparent 30%),
-    #0c1627;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  background: radial-gradient(circle at 22% 20%, var(--accent-soft), transparent 28%),
+    radial-gradient(circle at 80% 20%, rgba(0, 0, 0, 0.04), transparent 34%),
+    var(--card-2);
+  box-shadow: inset 0 1px 0 var(--border);
 }
 
 .map-placeholder {
@@ -539,8 +579,8 @@ h3 {
 .ghost-btn {
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ghost-border);
+  background: var(--ghost);
   color: var(--text);
   cursor: pointer;
 }
@@ -578,8 +618,8 @@ h3 {
   gap: 8px;
   padding: 12px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--ghost);
+  border: 1px solid var(--border);
 }
 
 .item .title {
@@ -658,7 +698,7 @@ h3 {
 .bar-track {
   height: 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--ghost);
   overflow: hidden;
 }
 
@@ -677,8 +717,8 @@ h3 {
 .forecast-card {
   padding: 12px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--ghost);
+  border: 1px solid var(--border);
 }
 
 .forecast-card .label {

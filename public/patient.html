@@ -28,7 +28,10 @@
             <div class="brand-sub">AI triage + hospital load radar</div>
           </div>
         </div>
-        <div class="pill online">Gemini ready</div>
+        <div class="top-actions">
+          <button type="button" class="ghost-btn small" id="theme-toggle">Night mode</button>
+          <div class="pill online">Gemini ready</div>
+        </div>
       </header>
 
       <main class="grid">
@@ -130,11 +133,13 @@
         <section class="panel maps-panel">
           <div class="panel-header">
             <div>
-              <p class="eyebrow">Local routing</p>
-              <h2>Find your nearest hospital</h2>
-              <p class="lede">Use OpenStreetMap data to jump to nearby hospitals and send patients the fastest route.</p>
+              <p class="eyebrow" data-i18n="map_eyebrow">Local routing</p>
+              <h2 data-i18n="map_title">Find your nearest hospital</h2>
+              <p class="lede" data-i18n="map_lede">
+                Use OpenStreetMap data to jump to nearby hospitals and send patients the fastest route.
+              </p>
             </div>
-            <div class="pill ghost" id="maps-status">Loading map...</div>
+            <div class="pill ghost" id="maps-status" data-i18n="map_loading">Loading map...</div>
           </div>
 
           <div class="map-grid">
@@ -144,11 +149,11 @@
 
             <div class="card places-scroll">
               <div class="card-head">
-                <h4>Hospitals nearby</h4>
-                <button type="button" class="ghost-btn" id="locate-btn">Use my location</button>
+                <h4 data-i18n="map_list_title">Hospitals nearby</h4>
+                <button type="button" class="ghost-btn" id="locate-btn" data-i18n="map_cta">Use my location</button>
               </div>
               <div class="list compact" id="places-list">
-                <div class="meta-line">Tap "Use my location" to search within ~10km.</div>
+                <div class="meta-line" data-i18n="map_list_hint">Tap "Use my location" to search within ~10km.</div>
               </div>
             </div>
           </div>
@@ -161,6 +166,7 @@
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
+    <script src="/theme.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>
