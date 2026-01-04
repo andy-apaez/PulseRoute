@@ -23,6 +23,7 @@
           </div>
         </div>
         <div class="top-actions">
+          <a class="ghost-btn small" href="/patient.html">Open patient intake</a>
           <button type="button" class="ghost-btn small" id="theme-toggle">Night mode</button>
           <div class="pill ghost">Staff view</div>
         </div>
@@ -35,7 +36,7 @@
               <p class="eyebrow">Hospital Dashboard</p>
               <h2>Incoming cases, acuity mix, and predicted load</h2>
               <p class="lede">
-                Neutral, operational snapshot for clinical staff. Data mirrors the latest triage runs from the patient side when available.
+                Operational snapshot for clinical staff. Mirrors the latest patient triage runs saved in this browser; keep the patient view open to stream new cases and clear storage if this device changes hands.
               </p>
             </div>
             <div class="pill ghost" id="load-pill">Predicted load updating</div>
@@ -61,7 +62,7 @@
             <div class="card" id="forecast-card">
               <div class="card-head">
                 <h4>Predicted load (next hour)</h4>
-                <span class="small">Autofilled from triage mix</span>
+                <span class="small">Updated every 5 minutes</span>
               </div>
               <div class="forecast-grid" id="forecast-grid"></div>
             </div>

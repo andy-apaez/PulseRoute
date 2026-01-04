@@ -626,6 +626,10 @@ h3 {
   font-weight: 600;
 }
 
+#incoming-list .title {
+  color: var(--accent);
+}
+
 .item .meta-line {
   color: var(--muted);
   font-size: 13px;
